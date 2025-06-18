@@ -1,29 +1,31 @@
 #!/bin/bash
-# ==============================================================================
-# Nom du fichier   : ethernet_blink.sh
-# Chemin complet   : /var/www/html/scripts/ethernet_blink.sh
-# Descriptif       : Fait clignoter le lien Ethernet (interface eth0) en répétant
-#                   ON/OFF avec une fréquence et une durée paramétrables.
-# Dépendances      : ethtool, sudo (autorisé sans mot de passe pour ce script)
-# Fonctionnement   : Exécuté par trigger_blink.php avec 2 arguments (durée, intervalle).
-#                   Logue chaque action dans /var/log/ethernet_blink.log
-# Auteur           : Sylvain SCATTOLINI
-# Version          : 1.0
-# Date             : 2025-06-18
-# ==============================================================================
+# =============================================================================
+# Nom du script : ethernet_blink.sh
+# Chemin        : /var/www/html/scripts/ethernet_blink.sh
+# Description   : Fait clignoter la LED de l'interface Ethernet sans impacter
+#                 la connectivité Wi-Fi ni Apache. Utile pour identifier un port.
+# Options       : $1 = nombre de clignotements (défaut : 10)
+#                 $2 = intervalle en secondes (défaut : 10)
+# Exemple       : ./ethernet_blink.sh 5 3
+# Dépendances   : ethtool
+# Auteur        : Sylvain SCATTOLINI
+# Date          : 2025-06-18
+# Version       : 1.4
+# =============================================================================
+
+#!/bin/bash
+# /var/www/html/scripts/ethernet_blink.sh
 
 IFACE="eth0"
-DURATION=${1:-10}
-INTERVAL=${2:-10}
+DURATION=10
+INTERVAL=5
 LOG_FILE="/var/log/ethernet_blink.log"
 
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+    echo "[$(date '+%H:%M:%S')] $1" >> "$LOG_FILE"
 }
-
-log "🔁 [$IFACE] Clignotement lancé ($DURATION boucles, $INTERVAL s)"
-
-for ((i = 0; i < DURATION; i++)); do
+log "🔵 [$IFACE] Clignotement manuel lancé"
+for ((i = 0; i < DURATION; i += 2)); do
     log "⚫️ [$IFACE] OFF"
     ip link set "$IFACE" down
     sleep "$INTERVAL"
@@ -33,4 +35,4 @@ for ((i = 0; i < DURATION; i++)); do
     sleep "$INTERVAL"
 done
 
-log "✅ [$IFACE] Clignotement terminé"
+log "🔵 [$IFACE] Clignotement manuel terminé"
