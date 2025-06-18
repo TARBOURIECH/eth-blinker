@@ -1,0 +1,178 @@
+<!--
+Nom du fichier   : index.html
+Chemin complet   : /var/www/html/index.html
+Descriptif       : Interface web responsive pour déclencher le clignotement Ethernet,
+                   afficher son état en temps réel et consulter les logs.
+Dépendances      : ethernet_status.php, trigger_blink.php, scripts/ethernet_blink.sh
+Fonctionnement   : Utilise JavaScript pour interroger le backend toutes les secondes
+                   (AJAX) et interagir avec l'interface via un bouton Clignoter.
+Auteur           : Sylvain SCATTOLINI
+Version          : 1.0
+Date             : 2025-06-18
+-->
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>État Ethernet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 90hv;
+      font-family: sans-serif;
+      background: #111;
+      color: #0f0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    button {
+      width: 100%
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex: 1;
+    }
+
+    .status-box {
+      border-radius: 10px;
+      transition: background-color 0.5s;
+    }
+
+    .log {
+      background: #000;
+      padding: 1em;
+      overflow-y: auto;
+      font-family: monospace;
+      border-top: 1px solid #333;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5em;
+      padding: 1em;
+      justify-content: space-between;
+      align-items: center;
+      background: #222;
+    }
+
+    .controls input {
+      width: 50px;
+      padding: 0.3em;
+    }
+
+    .controls button {
+      padding: 0.5em 1em;
+      font-weight: bold;
+      background: #333;
+      color: #0f0;
+      border: 1px solid #0f0;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #start {
+      width: 100%;
+    }
+    @media (min-width: 600px) and (orientation: landscape) {
+
+    
+      .container {
+        flex-direction: row;
+      }
+
+      .top {
+        width: 300px;
+        height: 100vh;
+      }
+
+      .status-box {
+        width: 300px;
+        height: 300px;
+      }
+
+      .log {
+        flex: 1;
+        height: 100vh;
+        font-size: 0.9em;
+      }
+    }
+
+    @media (max-width: 599px), (orientation: portrait) {
+      .controls, button {
+        font-size: 1.2rem;
+      }
+      .status-box {
+        width: 100vw;
+        aspect-ratio: 2 / 1;
+        margin: 0;
+      }
+
+      .log {
+        height: calc(100vh - 100vw - 120px); /* carré + contrôle */
+        font-size: 1.1em;
+      }
+      input {
+        font-size: 1.2rem; 
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="top">
+      <div id="status" class="status-box"></div>
+    </div>
+    <div class="log" id="log"></div>
+  </div>
+
+<div class="controls">
+  Boucles <input type="number" id="duration" value="10" min="1" title="Durée (boucles)">
+  Durée <input type="number" id="interval" value="10" min="1" title="Intervalle (sec)">
+  <button onclick="triggerBlink()">🔁 Clignoter maintenant</button>
+</div>
+
+<script>
+async function fetchStatus() {
+  const res = await fetch('ethernet_status.php');
+  const data = await res.json();
+
+  document.getElementById('status').style.backgroundColor = data.link === 'up' ? 'green' : 'black';
+  const log = document.getElementById('log');
+  log.innerHTML = data.logs.join('<br>');
+  log.scrollTop = log.scrollHeight;
+}
+
+async function triggerBlink() {
+  const duration = document.getElementById('duration').value;
+  const interval = document.getElementById('interval').value;
+
+  const res = await fetch('trigger_blink.php', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ duration, interval })
+  });
+
+  const data = await res.json();
+  alert(data.message || 'Clignotement lancé');
+}
+
+setInterval(fetchStatus, 1000);
+fetchStatus();
+</script>
+</body>
+</html>
